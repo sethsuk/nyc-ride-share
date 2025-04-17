@@ -19,4 +19,38 @@ router.get('/test', async (req, res) => {
     }
 });
 
+router.get('/avgFareWeather', async (req, res, next) => {
+    console.log("Avg Fare Weather Called");
+
+    const temp  = parseFloat(req.query.temperature);
+    const rain  = parseFloat(req.query.rain);
+    const wind = parseFloat(req.query.wind_speed);
+
+    if ([temp, rain, wind].some(Number.isNaN)) {
+        return res.status(400).json({ error: 'temperature, rain, and wind_speed must be numeric query parameters' });
+    }
+
+    try {
+        const sql = `
+            SELECT AVG(u.total_fare) AS avg_fare
+            FROM uber_rides u
+            JOIN weather w
+                ON date_trunc('hour', u.request_datetime) = w.time
+            WHERE w.temperature BETWEEN $1 - 2 AND $1 + 2    -- ±2°F window
+            AND w.rain BETWEEN $2 - 0.1 AND $2 + 0.1  -- ±0.1 inches rain
+            AND w.wind_speed BETWEEN $3 - 1 AND $3 + 1;   -- ±1 mph wind
+        `;
+        const { rows } = await pool.query(sql, [temp, rain, wind]);
+
+        if (!rows[0].avg_fare) {
+            return res.status(404).json({ error: 'No rides matched those conditions' });
+        }
+
+        res.status(200).json({ averageFare: Number(rows[0].avg_fare) });
+    } catch (err) {
+        console.log(err)
+        res.status(500).json({ error: 'Database error'})
+    }
+  });
+
 module.exports = router;
