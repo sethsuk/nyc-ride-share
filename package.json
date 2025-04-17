@@ -1,0 +1,20 @@
+{
+  "name": "nyc-ride-share",
+  "version": "1.0.0",
+  "description": "Our web application is an online interactive application that seeks to predict rideshare price and time based on a source and target location selected at a certain time of the week. This would allow users to select a source and target destination in New York, likely using an online mapping API (Google Maps) for the front-end UI, at a given date and time of the week. We started this because when David, fresh off the boat from Korea, first went to NYC, he was baffled by the extreme rideshare prices. If he had been able to predict them before visiting NYC through an application like the one we’re currently developing, he would’ve been able to plan his trip much better.",
+  "homepage": "https://github.com/sethsuk/nyc-ride-share#readme",
+  "bugs": {
+    "url": "https://github.com/sethsuk/nyc-ride-share/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sethsuk/nyc-ride-share.git"
+  },
+  "license": "ISC",
+  "author": "Seth Sukboontip, Luka Koll, David Lee, Sam Park",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+}
