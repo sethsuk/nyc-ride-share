@@ -1,7 +1,7 @@
 import React, {useState, useEffect} from 'react';
 import Map, { Marker } from "react-map-gl/mapbox";
 import { Meta } from 'react-router-dom';
-import * as turf from '@turf/turf';
+// import * as turf from '@turf/turf';
 // import taxiZones from './data/taxi_zones.geojson';
 
 
@@ -10,13 +10,12 @@ export default function HomeScreen() {
         const point = turf.point([lng, lat]);
         for (const feature of taxiZones.features) {
           if (turf.booleanPointInPolygon(point, feature)) {
-            return feature.properties.location_id; // or .zone for name
+            return feature.properties.location_id;
           }
         }
         return null;
       }
     return (
-<<<<<<< HEAD
         <>
             <div className="map">
                 <Map
@@ -41,10 +40,5 @@ export default function HomeScreen() {
                 </Map>
             </div>
         </>
-=======
-        <div>
-            <h1>Welcome to the Home Screen</h1>
-        </div>
->>>>>>> 399ee00 (implemented all backend endpoints)
     )
 }

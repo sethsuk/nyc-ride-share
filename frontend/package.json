@@ -4,13 +4,16 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "start": "vite --port 3000",
+    "dev": "vite --port 3000",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview"
   },
   "dependencies": {
     "@turf/turf": "^7.2.0",
+    "bcrypt": "^5.1.1",
+    "bcryptjs": "^3.0.2",
     "mapbox-gl": "^3.11.1",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",

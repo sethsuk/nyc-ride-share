@@ -1,26 +1,19 @@
-import { useState } from 'react'
-import HomeScreen from './pages/homeScreen.jsx';
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
-import {BrowserRouter as Router, Route, Routes} from 'react-router-dom';
+// FILE: src/App.jsx
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import HomeScreen from './pages/homeScreen';
+import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
 
-function App() {
-  const [count, setCount] = useState(0)
-
+export default function App() {
   return (
-    <>
-      <Router>
-        <Routes>
-<<<<<<< HEAD
-          <Route path="/" element={<HomeScreen />}/>
-=======
-          <Route path="/" element={<HomeScreen />} />
->>>>>>> 399ee00 (implemented all backend endpoints)
-        </Routes>
-      </Router>
-    </>
-  )
+    <Router>
+      <Routes>
+        <Route path="/" element={<Navigate to="/register" replace />} />
+        <Route path="/register" element={<RegisterPage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/home" element={<HomeScreen />} />
+      </Routes>
+    </Router>
+  );
 }
-
-export default App
