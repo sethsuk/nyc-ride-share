@@ -19,4 +19,83 @@ router.get('/test', async (req, res) => {
     }
 });
 
+// 10. Register user
+router.post('/register', async (req, res) => {
+    const { username, hashed_password } = req.body;
+
+    try {
+        const result = await pool.query(
+            'INSERT INTO users (username, hashed_password) VALUES ($1, $2)',
+            [username, hashed_password]
+        );
+        res.json({ message: 'User registered successfully' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Database error' });
+    }
+});
+
+// 11. Login user
+router.post('/login', async (req, res) => {
+    const { username } = req.body;
+
+    try {
+        const result = await pool.query(
+            'SELECT hashed_password FROM users WHERE username = $1',
+            [username]
+        );
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+        res.json({ hashed_password: result.rows[0].hashed_password });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Database error' });
+    }
+});
+
+// 12 & 13. Log Uber Ride & User Ride
+router.post('/logUberRide', async (req, res) => {
+    const {
+        username, request_datetime, on_scene_datetime,
+        trip_time, PULocationID, DOLocationID,
+        trip_miles, tolls, total_fare,
+        driver_pay, tips
+    } = req.body;
+
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+
+        const insertRide = await client.query(`
+            INSERT INTO Uber_Rides (
+                request_datetime, on_scene_datetime, trip_time,
+                PULocationID, DOLocationID, trip_miles, tolls,
+                total_fare, driver_pay, tips
+            ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+            RETURNING ride_id;
+        `, [
+            request_datetime, on_scene_datetime, trip_time,
+            PULocationID, DOLocationID, trip_miles, tolls,
+            total_fare, driver_pay, tips
+        ]);
+
+        const ride_id = insertRide.rows[0].ride_id;
+
+        await client.query(
+            'INSERT INTO user_rides (username, ride_id) VALUES ($1, $2)',
+            [username, ride_id]
+        );
+
+        await client.query('COMMIT');
+        res.json({ message: 'Ride logged successfully' });
+    } catch (err) {
+        await client.query('ROLLBACK');
+        console.error(err);
+        res.status(500).json({ error: 'Failed to log ride' });
+    } finally {
+        client.release();
+    }
+});
+
 module.exports = router;
