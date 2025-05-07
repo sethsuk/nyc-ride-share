@@ -35,10 +35,10 @@ router.get('/avgFareWeather', async (req, res, next) => {
             SELECT AVG(u.total_fare) AS avg_fare
             FROM uber_rides u
             JOIN weather w
-                ON date_trunc('hour', u.request_datetime) = w.time
-            WHERE w.temperature BETWEEN $1 - 2 AND $1 + 2    -- ±2°F window
-            AND w.rain BETWEEN $2 - 0.1 AND $2 + 0.1  -- ±0.1 inches rain
-            AND w.wind_speed BETWEEN $3 - 1 AND $3 + 1;   -- ±1 mph wind
+                ON u.request_hour = w.time
+            WHERE w.temperature BETWEEN $1 - 2 AND $1 + 2
+            AND w.rain BETWEEN $2 - 0.1 AND $2 + 0.1
+            AND w.wind_speed BETWEEN $3 - 1 AND $3 + 1;
         `;
         const { rows } = await pool.query(sql, [temp, rain, wind]);
 

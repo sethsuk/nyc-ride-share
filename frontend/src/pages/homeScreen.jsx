@@ -2,7 +2,7 @@ import React, {useState, useEffect} from 'react';
 import Map, { Marker } from "react-map-gl/mapbox";
 import { Meta } from 'react-router-dom';
 import * as turf from '@turf/turf';
-import taxiZones from './data/taxi_zones.geojson';
+// import taxiZones from './data/taxi_zones.geojson';
 
 
 export default function HomeScreen() { 
