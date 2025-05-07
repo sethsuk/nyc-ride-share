@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import homeScreen from './pages/homeScreen.jsx';
+import HomeScreen from './pages/homeScreen.jsx';
 import reactLogo from './assets/react.svg'
 import viteLogo from '/vite.svg'
 import './App.css'
@@ -12,7 +12,7 @@ function App() {
     <>
       <Router>
         <Routes>
-          <Route path="/" element={homeScreen}/>
+          <Route path="/" element={<HomeScreen />}/>
         </Routes>
       </Router>
     </>
