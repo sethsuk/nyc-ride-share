@@ -16,6 +16,7 @@ export default function HomeScreen() {
         return null;
       }
     return (
+<<<<<<< HEAD
         <>
             <div className="map">
                 <Map
@@ -40,5 +41,10 @@ export default function HomeScreen() {
                 </Map>
             </div>
         </>
+=======
+        <div>
+            <h1>Welcome to the Home Screen</h1>
+        </div>
+>>>>>>> 399ee00 (implemented all backend endpoints)
     )
 }

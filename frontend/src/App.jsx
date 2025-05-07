@@ -12,7 +12,11 @@ function App() {
     <>
       <Router>
         <Routes>
+<<<<<<< HEAD
           <Route path="/" element={<HomeScreen />}/>
+=======
+          <Route path="/" element={<HomeScreen />} />
+>>>>>>> 399ee00 (implemented all backend endpoints)
         </Routes>
       </Router>
     </>
