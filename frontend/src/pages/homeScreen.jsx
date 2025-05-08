@@ -132,34 +132,44 @@ export default function HomeScreen() {
   };
 
   const queryRoute8 = async () => {
-  try {
-    if (!user || !origin || !destination || !weatherData?.current) {
-      console.error('Missing required inputs for similarity query');
-      return;
+    try {
+      const response = await fetch(`http://localhost:5050/rides/user-hourly-stats?username=${user}`);
+      const data = await response.json();
+      displayResults(data);
+    } catch (err) {
+      console.error('Error in queryRoute9:', err);
     }
+  };
 
-  
-    const temperature = weatherData.current.main.temp;
-    const wind_speed = weatherData.current.wind.speed;
-    const rain = weatherData.current.rain?.['1h'] ?? 0;
+  const queryRoute9 = async () => {
+    try {
+      const response = await fetch(`http://localhost:5050/rides/total-user-hourly-aggregates`);
+      const data = await response.json();
+      displayResults(data);
+    } catch (err) {
+      console.error('Error in queryRoute10:', err);
+    }
+  };
 
-    const input_time = new Date().toISOString(); // current time
+  const queryRoute10 = async () => {
+    try {
+      const response = await fetch(`http://localhost:5050/rides/carpool?username=${user}`);
+      const data = await response.json();
+      displayResults(data);
+    } catch (err) {
+      console.error('Error in queryRoute11:', err);
+    }
+  };
 
-    const url = new URL('http://localhost:5050/rides/user-hourly-stats');
-    url.searchParams.append('username', user);
-    url.searchParams.append('input_pu', origin);
-    url.searchParams.append('input_do', destination);
-    url.searchParams.append('input_time', input_time);
-    url.searchParams.append('input_temp', temperature);
-    url.searchParams.append('input_rain', rain);
-
-    const response = await fetch(url);
-    const data = await response.json();
-    displayResults(data);
-  } catch (err) {
-    console.error('Error in queryRoute8:', err);
-  }
-};
+  const queryRoute11 = async () => {
+    try {
+      const response = await fetch(`http://localhost:5050/rides/overpaid?username=${user}`);
+      const data = await response.json();
+      displayResults(data);
+    } catch (err) {
+      console.error('Error in queryRoute12:', err);
+    }
+  };
 
   const [weatherData, setWeatherData] = useState(null);
 
@@ -326,15 +336,17 @@ export default function HomeScreen() {
               <button className="btn" onClick={queryRoute1}>Expected fare given weather conditions</button>
               <button className="btn" onClick={queryRoute2}>Expected fare given pickup and drop-off locations</button>
               <button className="btn" onClick={queryRoute3}>Expected ride time</button>
-              <button className="btn" onClick={queryRoute4}>Top 5 most similar rides in database</button>
             </div>
             <h2>General Metrics</h2>
             <div className="section">
-              <button className="btn" onClick={queryRoute5}>Hourly ride count for above-average fares</button>
-              <button className="btn" onClick={queryRoute6}>Detailed ride analysis by extreme weather & location</button>
-              <button className="btn" onClick={queryRoute7}>Rush hour vs. non-rush hour by pickup location</button>
-              <button className="btn" onClick={queryRoute8}>Outlier rides based on fare and trip time</button>
-              <button className="btn" onClick={queryRoute9}>Hourly user-aggregated ride stats by weather</button>
+              <button className="btn" onClick={queryRoute4}>Hourly ride count for above-average fares</button>
+              <button className="btn" onClick={queryRoute5}>Detailed ride analysis by extreme weather & location</button>
+              <button className="btn" onClick={queryRoute6}>Rush hour vs. non-rush hour by pickup location</button>
+              <button className="btn" onClick={queryRoute7}>Outlier rides based on fare and trip time</button>
+              <button className="btn" onClick={queryRoute8}>Current user aggregated ride stats</button>
+              <button className="btn" onClick={queryRoute9}>All user rides hourly aggregated ride stats</button>
+              <button className="btn" onClick={queryRoute10}>Other users with similar ride history to carpool with</button>
+              <button className="btn" onClick={queryRoute11}>Average fare difference between user and all other rides</button>
             </div>
           </div>
         </>
