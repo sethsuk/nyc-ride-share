@@ -53,7 +53,7 @@ router.get('/avg-fare-weather', async (req, res) => {
 
 // 2. Avg fare by PU/DO + weather (with fallback)
 router.get('/avg-fare-estimate', async (req, res) => {
-    const { puLocationId, doLocationId, temperature, rain, windSpeed, tripMiles } = req.query;
+    const { puLocationId, doLocationId, temperature, rain, windSpeed } = req.query;
 
     try {
         const exactQuery = `
@@ -71,21 +71,18 @@ router.get('/avg-fare-estimate', async (req, res) => {
             return res.json({ avg_fare: exactResult.rows[0].avg_fare, method: "exact" });
         }
 
-        if (!tripMiles) {
-            return res.status(404).json({ error: 'No results for exact query and no fallback tripMiles provided' });
-        }
-
+        // fallback: drop PU/DO and return overall average under same weather
         const fallbackQuery = `
             SELECT ROUND(AVG(U.total_fare), 2) as avg_fare
             FROM uber_rides as U JOIN weather as W
-            ON u.request_hour = W.time
-            WHERE U.trip_miles BETWEEN $6 - 5 AND $6 + 5
-                AND W.temperature BETWEEN $3 - 1 AND $3 + 1
-                AND W.rain BETWEEN $4 - 0.1 AND $4 + 0.1
-                AND W.wind_speed BETWEEN $5 - 1 AND $5 + 1;
+            ON U.request_hour = W.time
+            WHERE W.temperature BETWEEN $1 - 1 AND $1 + 1
+                AND W.rain BETWEEN $2 - 0.1 AND $2 + 0.1
+                AND W.wind_speed BETWEEN $3 - 1 AND $3 + 1;
         `;
-        const fallbackResult = await pool.query(fallbackQuery, [puLocationId, doLocationId, temperature, rain, windSpeed, tripMiles]);
-        res.json({ avg_fare: fallbackResult.rows[0].avg_fare, method: "range" });
+        const fallbackResult = await pool.query(fallbackQuery, [temperature, rain, windSpeed]);
+        res.json({ avg_fare: fallbackResult.rows[0].avg_fare, method: "weather_only_fallback" });
+
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Database error' });
@@ -203,51 +200,51 @@ router.get('/outlier-rides', async (req, res) => {
 
 // 8. Statistics about user's agg hourly rides and the price difference
 router.get('/user-hourly-stats', async (req, res) => {
-    const { username } = req.query;
+  const { username } = req.query;
+  
+  const sql = `
+      WITH user_hourly AS (
+          SELECT
+              u.request_hour,
+              AVG(u.total_fare) AS user_avg_fare
+          FROM user_rides ur
+          JOIN uber_rides u
+          ON ur.ride_id = u.ride_id
+          WHERE ur.username = $1
+          GROUP BY u.request_hour
+      ),
+      filtered_global AS (
+          SELECT
+              m.hour,
+              m.avg_fare AS global_avg_fare
+          FROM mv_hourly_ride_stats m
+          WHERE EXISTS (
+              SELECT 1
+              FROM user_hourly uh
+              WHERE uh.request_hour = m.hour
+          )
+      )
+      SELECT
+          f.hour,
+          ROUND(uh.user_avg_fare, 2) AS user_avg_fare,
+          ROUND(f.global_avg_fare, 2) AS global_avg_fare,
+          ROUND((uh.user_avg_fare - f.global_avg_fare), 2) AS fare_diff
+      FROM filtered_global f
+      JOIN user_hourly uh
+      ON uh.request_hour = f.hour
+      ORDER BY fare_diff DESC
+      LIMIT 5;
+  `;
 
-    const sql = `
-        WITH user_hourly AS (
-            SELECT
-                u.request_hour,
-                AVG(u.total_fare) AS user_avg_fare
-            FROM user_rides ur
-            JOIN uber_rides u
-            ON ur.ride_id = u.ride_id
-            WHERE ur.username = $1
-            GROUP BY u.request_hour
-        ),
-        filtered_global AS (
-            SELECT
-                m.hour,
-                m.avg_fare AS global_avg_fare
-            FROM mv_hourly_ride_stats m
-            WHERE EXISTS (
-                SELECT 1
-                FROM user_hourly uh
-                WHERE uh.request_hour = m.hour
-            )
-        )
-        SELECT
-            f.hour,
-            ROUND(uh.user_avg_fare, 2) AS user_avg_fare,
-            ROUND(f.global_avg_fare, 2) AS global_avg_fare,
-            ROUND((uh.user_avg_fare - f.global_avg_fare), 2) AS fare_diff
-        FROM filtered_global f
-        JOIN user_hourly uh
-        ON uh.request_hour = f.hour
-        ORDER BY fare_diff DESC
-        LIMIT 5;
-    `;
-
-    try {
-        const result = await pool.query(sql, [username]);
-        res.json(result.rows);
-    } catch (err) {
-        res.status(500).json({ error: 'Database error' });
-    }
+  try {
+    const result = await pool.query(sql, [username]);
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error in user-hourly-stats route:', err);
+    res.status(500).json({ error: 'Database error' });
+  }
 });
 
-// 9. Hourly rides stats by weather by all users
 router.get('/total-user-hourly-aggregates', async (req, res) => {
     const sql = `
         WITH user_hourly_aggregates AS (
