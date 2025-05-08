@@ -34,7 +34,7 @@ export default function HomeScreen() {
 
   const queryRoute1 = async () => {
     try {
-      const response = await fetch(`http://localhost:5050/rides/avgFareWeather?temperature=25&rain=0&wind_speed=5`);
+      const response = await fetch(`http://localhost:5050/rides/avg-fare-weather?temperature=25&rain=0&wind_speed=5`);
       const data = await response.json();
       displayResults(data);
     } catch (err) {
@@ -44,7 +44,7 @@ export default function HomeScreen() {
 
   const queryRoute2 = async () => {
     try {
-      const response = await fetch(`http://localhost:5050/rides/avgFareEstimate?puLocationId=${origin}&doLocationId=${destination}&temperature=25&rain=0&windSpeed=5&tripMiles=5`);
+      const response = await fetch(`http://localhost:5050/rides/avg-fare-estimate?puLocationId=${origin}&doLocationId=${destination}&temperature=25&rain=0&windSpeed=5&tripMiles=5`);
       const data = await response.json();
       displayResults(data);
     } catch (err) {
@@ -54,7 +54,7 @@ export default function HomeScreen() {
 
   const queryRoute3 = async () => {
     try {
-      const response = await fetch(`http://localhost:5050/rides/averageTripTime?Pickup_id=${origin}&Dropoff_id=${destination}&Temperature=25&Rain=0&Wind_speed=5`);
+      const response = await fetch(`http://localhost:5050/rides/average-trip-time?Pickup_id=${origin}&Dropoff_id=${destination}&Temperature=25&Rain=0&Wind_speed=5`);
       const data = await response.json();
       displayResults(data);
     } catch (err) {
