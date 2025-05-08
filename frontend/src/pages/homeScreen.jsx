@@ -62,16 +62,6 @@ export default function HomeScreen() {
     }
   };
 
-  const queryRoute4 = async () => {
-    try {
-      const response = await fetch(`http://localhost:5050/rides/similar?username=${user}&input_pu=${origin}&input_do=${destination}&input_time=2024-01-01T12:00:00Z&input_temp=25&input_rain=0`);
-      const data = await response.json();
-      displayResults(data);
-    } catch (err) {
-      console.error('Error in queryRoute4:', err);
-    }
-  };
-
   const queryRoute5 = async () => {
     try {
       const response = await fetch(`http://localhost:5050/rides/high-fare-hours`);
@@ -84,7 +74,7 @@ export default function HomeScreen() {
 
   const queryRoute6 = async () => {
     try {
-      const response = await fetch(`http://localhost:5050/rides/stats/extreme-weather-routes`);
+      const response = await fetch(`http://localhost:5050/rides/extreme-weather-routes`);
       const data = await response.json();
       displayResults(data);
     } catch (err) {
@@ -114,11 +104,41 @@ export default function HomeScreen() {
 
   const queryRoute9 = async () => {
     try {
-      const response = await fetch(`http://localhost:5050/rides/stats/hourly-user-aggregates`);
+      const response = await fetch(`http://localhost:5050/rides/user-hourly-stats?username=${user}`);
       const data = await response.json();
       displayResults(data);
     } catch (err) {
       console.error('Error in queryRoute9:', err);
+    }
+  };
+
+  const queryRoute10 = async () => {
+    try {
+      const response = await fetch(`http://localhost:5050/rides/total-user-hourly-aggregates`);
+      const data = await response.json();
+      displayResults(data);
+    } catch (err) {
+      console.error('Error in queryRoute10:', err);
+    }
+  };
+
+  const queryRoute11 = async () => {
+    try {
+      const response = await fetch(`http://localhost:5050/rides/carpool?username=${user}`);
+      const data = await response.json();
+      displayResults(data);
+    } catch (err) {
+      console.error('Error in queryRoute11:', err);
+    }
+  };
+
+  const queryRoute12 = async () => {
+    try {
+      const response = await fetch(`http://localhost:5050/rides/overpaid?username=${user}`);
+      const data = await response.json();
+      displayResults(data);
+    } catch (err) {
+      console.error('Error in queryRoute12:', err);
     }
   };
 
@@ -287,7 +307,6 @@ export default function HomeScreen() {
               <button className="btn" onClick={queryRoute1}>Expected fare given weather conditions</button>
               <button className="btn" onClick={queryRoute2}>Expected fare given pickup and drop-off locations</button>
               <button className="btn" onClick={queryRoute3}>Expected ride time</button>
-              <button className="btn" onClick={queryRoute4}>Top 5 most similar rides in database</button>
             </div>
             <h2>General Metrics</h2>
             <div className="section">
@@ -295,7 +314,10 @@ export default function HomeScreen() {
               <button className="btn" onClick={queryRoute6}>Detailed ride analysis by extreme weather & location</button>
               <button className="btn" onClick={queryRoute7}>Rush hour vs. non-rush hour by pickup location</button>
               <button className="btn" onClick={queryRoute8}>Outlier rides based on fare and trip time</button>
-              <button className="btn" onClick={queryRoute9}>Hourly user-aggregated ride stats by weather</button>
+              <button className="btn" onClick={queryRoute9}>Current user aggregated ride stats</button>
+              <button className="btn" onClick={queryRoute10}>All user rides hourly aggregated ride stats</button>
+              <button className="btn" onClick={queryRoute11}>Other users with similar ride history to carpool with</button>
+              <button className="btn" onClick={queryRoute12}>Average fare difference between user and all other rides</button>
             </div>
           </div>
         </>

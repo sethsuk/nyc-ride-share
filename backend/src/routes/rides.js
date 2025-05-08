@@ -106,7 +106,7 @@ router.get('/average-trip-time', async (req, res) => {
     `;
     try {
         const result = await pool.query(sql, [Pickup_id, Dropoff_id, Temperature, Rain, Wind_speed]);
-        res.json({ avg_time: result.rows[0].avg_time });
+        res.json({ avg_time: result.rows[0].avg_time_min });
     } catch (err) {
         res.status(500).json({ error: 'Database error' });
     }
@@ -130,7 +130,7 @@ router.get('/high-fare-hours', async (req, res) => {
 });
 
 // 5. Ride analysis under extreme weather by route
-router.get('/stats/extreme-weather-routes', async (req, res) => {
+router.get('/extreme-weather-routes', async (req, res) => {
     const sql = `
         SELECT
             pulocationid,
@@ -177,7 +177,6 @@ router.get('/rush-hour-analysis', async (req, res) => {
 
 // 7. Outlier rides
 router.get('/outlier-rides', async (req, res) => {
-    console.log("called outlier-rides")
     const sql = `
         SELECT
             u.pulocationid,
@@ -202,7 +201,7 @@ router.get('/outlier-rides', async (req, res) => {
     }
 });
 
-// 8. Statistics about user's hourly rides and the price difference
+// 8. Statistics about user's agg hourly rides and the price difference
 router.get('/user-hourly-stats', async (req, res) => {
     const { username } = req.query;
 
@@ -230,13 +229,14 @@ router.get('/user-hourly-stats', async (req, res) => {
         )
         SELECT
             f.hour,
-            ROUND(uh.user_avg_fare, 2),
-            ROUND(f.global_avg_fare, 2),
+            ROUND(uh.user_avg_fare, 2) AS user_avg_fare,
+            ROUND(f.global_avg_fare, 2) AS global_avg_fare,
             ROUND((uh.user_avg_fare - f.global_avg_fare), 2) AS fare_diff
         FROM filtered_global f
         JOIN user_hourly uh
         ON uh.request_hour = f.hour
-        ORDER BY fare_diff DESC;
+        ORDER BY fare_diff DESC
+        LIMIT 5;
     `;
 
     try {
@@ -247,8 +247,8 @@ router.get('/user-hourly-stats', async (req, res) => {
     }
 });
 
-// 9. Hourly user-aggregated ride stats by weather
-router.get('/hourly-user-aggregates', async (req, res) => {
+// 9. Hourly rides stats by weather by all users
+router.get('/total-user-hourly-aggregates', async (req, res) => {
     const sql = `
         SELECT hour, rain_status, SUM(total_revenue) AS total_revenue, 
                ROUND(AVG(avg_trip_miles)::numeric, 2) AS avg_trip_miles,
@@ -303,11 +303,11 @@ router.get('/carpool', async (req, res) => {
         )
         SELECT
             uf.username,
-            ROUND(ABS(uf.avg_hour - t.avg_hour)
+            ROUND((ABS(uf.avg_hour - t.avg_hour)
                 + ABS(uf.avg_temp - t.avg_temp)
                 + ABS(uf.avg_rain - t.avg_rain)
                 + ABS(uf.avg_trip_time - t.avg_trip_time)
-                + ABS(uf.avg_trip_miles - t.avg_trip_miles), 2)
+                + ABS(uf.avg_trip_miles - t.avg_trip_miles))::numeric, 2)
             AS similarity_score
         FROM user_features uf
         CROSS JOIN target t
