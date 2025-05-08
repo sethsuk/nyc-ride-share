@@ -133,7 +133,7 @@ router.get('/extreme-weather-routes', async (req, res) => {
             pulocationid,
             dolocationid,
             ROUND(avg_fare, 2) as avg_fare,
-            ROUND(AVG(U.trip_time) / 60.0, 2) as avg_time_min,
+            ROUND(avg_trip_time / 60.0, 2) as avg_time_min,
             ride_count
         FROM
             mv_extreme_weather_stats

@@ -44,7 +44,7 @@ export default function HomeScreen() {
 
   try {
     const response = await fetch(
-      `http://localhost:5050/rides/avgFareWeather?temperature=${temperature}&rain=${rain}&wind_speed=${wind_speed}`
+      `http://localhost:5050/rides/avg-fare-weather?temperature=${Math.round(temperature)}&rain=${Math.round(rain)}&wind_speed=${Math.round(wind_speed)}`
     );
     const data = await response.json();
     displayResults(data);
@@ -64,7 +64,7 @@ export default function HomeScreen() {
   const rain = weatherData.current.rain?.['1h'] ?? 0;
 
     try {
-      const response = await fetch(`http://localhost:5050/rides/avg-fare-estimate?puLocationId=${origin}&doLocationId=${destination}&temperature=${temperature}&rain=${rain}&windSpeed=${wind_speed}`);
+      const response = await fetch(`http://localhost:5050/rides/avg-fare-estimate?puLocationId=${origin}&doLocationId=${destination}&temperature=${Math.round(temperature)}&rain=${Math.round(rain)}&windSpeed=${Math.round(wind_speed)}`);
       const data = await response.json();
       displayResults(data);
     } catch (err) {
@@ -83,7 +83,7 @@ export default function HomeScreen() {
   const rain = weatherData.current.rain?.['1h'] ?? 0;
 
     try {
-      const response = await fetch(`http://localhost:5050/rides/average-trip-time?Pickup_id=${origin}&Dropoff_id=${destination}&Temperature=${temperature}&Rain=${rain}&Wind_speed=${wind_speed}`);
+      const response = await fetch(`http://localhost:5050/rides/average-trip-time?Pickup_id=${origin}&Dropoff_id=${destination}&Temperature=${Math.round(temperature)}&Rain=${Math.round(rain)}&Wind_speed=${Math.round(wind_speed)}`);
       const data = await response.json();
       displayResults(data);
     } catch (err) {
@@ -103,7 +103,7 @@ export default function HomeScreen() {
 
   const queryRoute5 = async () => {
     try {
-      const response = await fetch(`http://localhost:5050/rides/stats/extreme-weather-routes`);
+      const response = await fetch(`http://localhost:5050/rides/extreme-weather-routes`);
       const data = await response.json();
       displayResults(data);
     } catch (err) {
