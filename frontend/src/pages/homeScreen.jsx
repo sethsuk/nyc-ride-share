@@ -94,7 +94,7 @@ export default function HomeScreen() {
 
   const queryRoute7 = async () => {
     try {
-      const response = await fetch(`http://localhost:5050/rides/rushHourAnalysis`);
+      const response = await fetch(`http://localhost:5050/rides/rush-hour-analysis`);
       const data = await response.json();
       displayResults(data);
     } catch (err) {
@@ -104,7 +104,7 @@ export default function HomeScreen() {
 
   const queryRoute8 = async () => {
     try {
-      const response = await fetch(`http://localhost:5050/rides/outlierRides`);
+      const response = await fetch(`http://localhost:5050/rides/outlier-rides`);
       const data = await response.json();
       displayResults(data);
     } catch (err) {
@@ -234,6 +234,7 @@ export default function HomeScreen() {
             <p>Choose Dropoff Location!</p>
             {weatherData?.current && (
               <div className="weather-summary-inline">
+                Current Weather:
                 🌡️ {weatherData.current.main.temp}°C&nbsp;
                 💨 {weatherData.current.wind.speed} m/s&nbsp;
                 ☔ {weatherData.current.rain?.['1h'] ?? 0} mm

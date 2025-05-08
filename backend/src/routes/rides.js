@@ -153,7 +153,7 @@ router.get('/stats/extreme-weather-routes', async (req, res) => {
 });
 
 // 6. Rush vs. non-rush hour analysis
-router.get('/rushHourAnalysis', async (req, res) => {
+router.get('/rush-hour-analysis', async (req, res) => {
     const sql = `
         SELECT * FROM mv_rush_hour_stats ORDER BY pulocationid;
     `;
@@ -167,7 +167,8 @@ router.get('/rushHourAnalysis', async (req, res) => {
 });
 
 // 7. Outlier rides
-router.get('/outlierRides', async (req, res) => {
+router.get('/outlier-rides', async (req, res) => {
+    console.log("called outlier-rides")
     const sql = `
         SELECT
             u.ride_id,
@@ -185,8 +186,10 @@ router.get('/outlierRides', async (req, res) => {
             AND u.dolocationid = rs.dolocationid
         WHERE
             u.total_fare > rs.avg_fare + 2 * rs.std_fare
-            OR u.trip_time > rs.avg_trip_time + 2 * rs.std_trip_time;
+            OR u.trip_time > rs.avg_trip_time + 2 * rs.std_trip_time
+        LIMIT 5;
     `;
+
     try {
         const result = await pool.query(sql);
         res.json(result.rows);
