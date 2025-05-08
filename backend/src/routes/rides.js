@@ -106,7 +106,7 @@ router.get('/average-trip-time', async (req, res) => {
     `;
     try {
         const result = await pool.query(sql, [Pickup_id, Dropoff_id, Temperature, Rain, Wind_speed]);
-        res.json({ avg_time: result.rows[0].avg_time });
+        res.json({ avg_time: result.rows[0].avg_time_min });
     } catch (err) {
         res.status(500).json({ error: 'Database error' });
     }
@@ -130,7 +130,7 @@ router.get('/high-fare-hours', async (req, res) => {
 });
 
 // 5. Ride analysis under extreme weather by route
-router.get('/stats/extreme-weather-routes', async (req, res) => {
+router.get('/extreme-weather-routes', async (req, res) => {
     const sql = `
         SELECT
             pulocationid,
@@ -177,7 +177,6 @@ router.get('/rush-hour-analysis', async (req, res) => {
 
 // 7. Outlier rides
 router.get('/outlier-rides', async (req, res) => {
-    console.log("called outlier-rides")
     const sql = `
         SELECT
             u.pulocationid,
@@ -202,7 +201,7 @@ router.get('/outlier-rides', async (req, res) => {
     }
 });
 
-// 8. Statistics about user's hourly rides and the price difference
+// 8. Statistics about user's agg hourly rides and the price difference
 router.get('/user-hourly-stats', async (req, res) => {
     const { username } = req.query;
 
@@ -230,13 +229,14 @@ router.get('/user-hourly-stats', async (req, res) => {
         )
         SELECT
             f.hour,
-            ROUND(uh.user_avg_fare, 2),
-            ROUND(f.global_avg_fare, 2),
+            ROUND(uh.user_avg_fare, 2) AS user_avg_fare,
+            ROUND(f.global_avg_fare, 2) AS global_avg_fare,
             ROUND((uh.user_avg_fare - f.global_avg_fare), 2) AS fare_diff
         FROM filtered_global f
         JOIN user_hourly uh
         ON uh.request_hour = f.hour
-        ORDER BY fare_diff DESC;
+        ORDER BY fare_diff DESC
+        LIMIT 5;
     `;
 
     try {
@@ -247,26 +247,31 @@ router.get('/user-hourly-stats', async (req, res) => {
     }
 });
 
-// 9. Hourly user-aggregated ride stats by weather
-router.get('/hourly-user-aggregates', async (req, res) => {
+// 9. Hourly rides stats by weather by all users
+router.get('/total-user-hourly-aggregates', async (req, res) => {
     const sql = `
-        SELECT hour, rain_status, SUM(total_revenue) AS total_revenue, 
-               ROUND(AVG(avg_trip_miles)::numeric, 2) AS avg_trip_miles,
-               SUM(ride_count) AS ride_count,
-               ROUND(AVG(ride_count), 2) AS avg_rides_per_user
-        FROM (
-            SELECT EXTRACT(HOUR FROM U.request_datetime) AS hour,
-                   CASE WHEN W.rain > 0 THEN 'Rain' ELSE 'No Rain' END AS rain_status,
-                   UR.username,
-                   COUNT(*) AS ride_count,
-                   SUM(U.total_fare) AS total_revenue,
-                   AVG(U.trip_miles) AS avg_trip_miles
+        WITH user_hourly_aggregates AS (
+            SELECT 
+                EXTRACT(HOUR FROM U.request_datetime) AS hour,
+                CASE WHEN W.rain > 0 THEN 'Rain' ELSE 'No Rain' END AS rain_status,
+                UR.username,
+                COUNT(*) AS ride_count,
+                SUM(U.total_fare) AS total_revenue,
+                AVG(U.trip_miles) AS avg_trip_miles
             FROM Uber_Rides U
             JOIN Weather W ON U.request_hour = W.time
             JOIN user_rides UR ON U.ride_id = UR.ride_id
             JOIN Users S ON UR.username = S.username
             GROUP BY hour, rain_status, UR.username
-        ) AS per_user
+        )
+        SELECT
+            hour,
+            rain_status,
+            SUM(total_revenue) AS total_revenue,
+            ROUND(AVG(avg_trip_miles)::numeric, 2) AS avg_trip_miles,
+            SUM(ride_count) AS ride_count,
+            ROUND(AVG(ride_count)::numeric, 2) AS avg_rides_per_user
+        FROM user_hourly_aggregates
         GROUP BY hour, rain_status
         ORDER BY hour, rain_status;
     `;
@@ -303,11 +308,11 @@ router.get('/carpool', async (req, res) => {
         )
         SELECT
             uf.username,
-            ROUND(ABS(uf.avg_hour - t.avg_hour)
+            ROUND((ABS(uf.avg_hour - t.avg_hour)
                 + ABS(uf.avg_temp - t.avg_temp)
                 + ABS(uf.avg_rain - t.avg_rain)
                 + ABS(uf.avg_trip_time - t.avg_trip_time)
-                + ABS(uf.avg_trip_miles - t.avg_trip_miles), 2)
+                + ABS(uf.avg_trip_miles - t.avg_trip_miles))::numeric, 2)
             AS similarity_score
         FROM user_features uf
         CROSS JOIN target t
