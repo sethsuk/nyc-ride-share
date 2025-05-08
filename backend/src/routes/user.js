@@ -5,6 +5,8 @@ require('dotenv').config();
 
 const router = express.Router();
 
+
+
 // GET dummy endpoint
 router.get('/test', async (req, res) => {
     try {
@@ -56,46 +58,76 @@ router.post('/login', async (req, res) => {
 
 // 12 & 13. Log Uber Ride & User Ride
 router.post('/logUberRide', async (req, res) => {
-    const {
-        username, request_datetime, on_scene_datetime,
-        trip_time, PULocationID, DOLocationID,
-        trip_miles, tolls, total_fare,
-        driver_pay, tips
-    } = req.body;
+  const {
+    username,
+    request_datetime,
+    on_scene_datetime,
+    trip_time,
+    PULocationID,
+    DOLocationID,
+    trip_miles,
+    tolls,
+    total_fare,
+    driver_pay,
+    tips
+  } = req.body;
 
-    const client = await pool.connect();
-    try {
-        await client.query('BEGIN');
+  // Parse and validate datetime inputs
+  const parsedRequestDatetime = new Date(request_datetime);
+  const parsedOnSceneDatetime = new Date(on_scene_datetime);
 
-        const insertRide = await client.query(`
-            INSERT INTO Uber_Rides (
-                request_datetime, on_scene_datetime, trip_time,
-                PULocationID, DOLocationID, trip_miles, tolls,
-                total_fare, driver_pay, tips
-            ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
-            RETURNING ride_id;
-        `, [
-            request_datetime, on_scene_datetime, trip_time,
-            PULocationID, DOLocationID, trip_miles, tolls,
-            total_fare, driver_pay, tips
-        ]);
+  if (isNaN(parsedRequestDatetime) || isNaN(parsedOnSceneDatetime)) {
+    console.error('invalid datetime input');
+    return res.status(400).json({ error: 'Invalid datetime format' });
+  }
 
-        const ride_id = insertRide.rows[0].ride_id;
+  const request_hour = new Date(parsedRequestDatetime);
+  request_hour.setMinutes(0, 0, 0);
+  const requestHourISO = request_hour.toISOString();
 
-        await client.query(
-            'INSERT INTO user_rides (username, ride_id) VALUES ($1, $2)',
-            [username, ride_id]
-        );
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
 
-        await client.query('COMMIT');
-        res.json({ message: 'Ride logged successfully' });
-    } catch (err) {
-        await client.query('ROLLBACK');
-        console.error(err);
-        res.status(500).json({ error: 'Failed to log ride' });
-    } finally {
-        client.release();
-    }
+
+    const insertRide = await client.query(`
+  INSERT INTO Uber_Rides (
+    request_datetime, on_scene_datetime, trip_time,
+    PULocationID, DOLocationID, trip_miles, tolls,
+    total_fare, driver_pay, tips, request_hour
+  ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+  RETURNING ride_id;
+`, [
+  parsedRequestDatetime.toISOString(),
+  parsedOnSceneDatetime.toISOString(),
+  trip_time,
+  PULocationID,
+  DOLocationID,
+  trip_miles,
+  tolls,
+  total_fare,
+  driver_pay,
+  tips,
+  requestHourISO
+]);
+
+
+    const ride_id = insertRide.rows[0].ride_id;
+
+    await client.query(
+      'INSERT INTO user_rides (username, ride_id) VALUES ($1, $2)',
+      [username, ride_id]
+    );
+
+    await client.query('COMMIT');
+    res.json({ message: 'Ride logged successfully' });
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error('Error logging ride:', err);
+    res.status(500).json({ error: 'Failed to log ride' });
+  } finally {
+    client.release();
+  }
 });
 
 module.exports = router;
