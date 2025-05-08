@@ -33,18 +33,38 @@ export default function HomeScreen() {
   };
 
   const queryRoute1 = async () => {
-    try {
-      const response = await fetch(`http://localhost:5050/rides/avg-fare-weather?temperature=25&rain=0&wind_speed=5`);
-      const data = await response.json();
-      displayResults(data);
-    } catch (err) {
-      console.error('Error in queryRoute1:', err);
-    }
-  };
+  if (!weatherData?.current) {
+    console.error("Weather data not available");
+    return;
+  }
+  
+  const temperature = weatherData.current.main.temp;
+  const wind_speed = weatherData.current.wind.speed;
+  const rain = weatherData.current.rain?.['1h'] ?? 0;
+
+  try {
+    const response = await fetch(
+      `http://localhost:5050/rides/avgFareWeather?temperature=${temperature}&rain=${rain}&wind_speed=${wind_speed}`
+    );
+    const data = await response.json();
+    displayResults(data);
+  } catch (err) {
+    console.error('Error in queryRoute1:', err);
+  }
+};
 
   const queryRoute2 = async () => {
+    if (!weatherData?.current) {
+    console.error("Weather data not available");
+    return;
+  }
+  
+  const temperature = weatherData.current.main.temp;
+  const wind_speed = weatherData.current.wind.speed;
+  const rain = weatherData.current.rain?.['1h'] ?? 0;
+
     try {
-      const response = await fetch(`http://localhost:5050/rides/avg-fare-estimate?puLocationId=${origin}&doLocationId=${destination}&temperature=25&rain=0&windSpeed=5&tripMiles=5`);
+      const response = await fetch(`http://localhost:5050/rides/avg-fare-estimate?puLocationId=${origin}&doLocationId=${destination}&temperature=${temperature}&rain=${rain}&windSpeed=${wind_speed}`);
       const data = await response.json();
       displayResults(data);
     } catch (err) {
@@ -53,8 +73,17 @@ export default function HomeScreen() {
   };
 
   const queryRoute3 = async () => {
+    if (!weatherData?.current) {
+    console.error("Weather data not available");
+    return;
+  }
+  
+  const temperature = weatherData.current.main.temp;
+  const wind_speed = weatherData.current.wind.speed;
+  const rain = weatherData.current.rain?.['1h'] ?? 0;
+
     try {
-      const response = await fetch(`http://localhost:5050/rides/average-trip-time?Pickup_id=${origin}&Dropoff_id=${destination}&Temperature=25&Rain=0&Wind_speed=5`);
+      const response = await fetch(`http://localhost:5050/rides/average-trip-time?Pickup_id=${origin}&Dropoff_id=${destination}&Temperature=${temperature}&Rain=${rain}&Wind_speed=${wind_speed}`);
       const data = await response.json();
       displayResults(data);
     } catch (err) {
@@ -64,7 +93,7 @@ export default function HomeScreen() {
 
   const queryRoute4 = async () => {
     try {
-      const response = await fetch(`http://localhost:5050/rides/similar?username=${user}&input_pu=${origin}&input_do=${destination}&input_time=2024-01-01T12:00:00Z&input_temp=25&input_rain=0`);
+      const response = await fetch(`http://localhost:5050/rides/high-fare-hours`);
       const data = await response.json();
       displayResults(data);
     } catch (err) {
@@ -74,7 +103,7 @@ export default function HomeScreen() {
 
   const queryRoute5 = async () => {
     try {
-      const response = await fetch(`http://localhost:5050/rides/high-fare-hours`);
+      const response = await fetch(`http://localhost:5050/rides/stats/extreme-weather-routes`);
       const data = await response.json();
       displayResults(data);
     } catch (err) {
@@ -84,7 +113,7 @@ export default function HomeScreen() {
 
   const queryRoute6 = async () => {
     try {
-      const response = await fetch(`http://localhost:5050/rides/stats/extreme-weather-routes`);
+      const response = await fetch(`http://localhost:5050/rides/rush-hour-analysis`);
       const data = await response.json();
       displayResults(data);
     } catch (err) {
@@ -94,7 +123,7 @@ export default function HomeScreen() {
 
   const queryRoute7 = async () => {
     try {
-      const response = await fetch(`http://localhost:5050/rides/rush-hour-analysis`);
+      const response = await fetch(`http://localhost:5050/rides/outlier-rides`);
       const data = await response.json();
       displayResults(data);
     } catch (err) {
@@ -103,24 +132,34 @@ export default function HomeScreen() {
   };
 
   const queryRoute8 = async () => {
-    try {
-      const response = await fetch(`http://localhost:5050/rides/outlier-rides`);
-      const data = await response.json();
-      displayResults(data);
-    } catch (err) {
-      console.error('Error in queryRoute8:', err);
+  try {
+    if (!user || !origin || !destination || !weatherData?.current) {
+      console.error('Missing required inputs for similarity query');
+      return;
     }
-  };
 
-  const queryRoute9 = async () => {
-    try {
-      const response = await fetch(`http://localhost:5050/rides/stats/hourly-user-aggregates`);
-      const data = await response.json();
-      displayResults(data);
-    } catch (err) {
-      console.error('Error in queryRoute9:', err);
-    }
-  };
+  
+    const temperature = weatherData.current.main.temp;
+    const wind_speed = weatherData.current.wind.speed;
+    const rain = weatherData.current.rain?.['1h'] ?? 0;
+
+    const input_time = new Date().toISOString(); // current time
+
+    const url = new URL('http://localhost:5050/rides/user-hourly-stats');
+    url.searchParams.append('username', user);
+    url.searchParams.append('input_pu', origin);
+    url.searchParams.append('input_do', destination);
+    url.searchParams.append('input_time', input_time);
+    url.searchParams.append('input_temp', temperature);
+    url.searchParams.append('input_rain', rain);
+
+    const response = await fetch(url);
+    const data = await response.json();
+    displayResults(data);
+  } catch (err) {
+    console.error('Error in queryRoute8:', err);
+  }
+};
 
   const [weatherData, setWeatherData] = useState(null);
 
