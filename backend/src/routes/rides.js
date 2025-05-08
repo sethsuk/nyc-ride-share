@@ -250,23 +250,28 @@ router.get('/user-hourly-stats', async (req, res) => {
 // 9. Hourly rides stats by weather by all users
 router.get('/total-user-hourly-aggregates', async (req, res) => {
     const sql = `
-        SELECT hour, rain_status, SUM(total_revenue) AS total_revenue, 
-               ROUND(AVG(avg_trip_miles)::numeric, 2) AS avg_trip_miles,
-               SUM(ride_count) AS ride_count,
-               ROUND(AVG(ride_count), 2) AS avg_rides_per_user
-        FROM (
-            SELECT EXTRACT(HOUR FROM U.request_datetime) AS hour,
-                   CASE WHEN W.rain > 0 THEN 'Rain' ELSE 'No Rain' END AS rain_status,
-                   UR.username,
-                   COUNT(*) AS ride_count,
-                   SUM(U.total_fare) AS total_revenue,
-                   AVG(U.trip_miles) AS avg_trip_miles
+        WITH user_hourly_aggregates AS (
+            SELECT 
+                EXTRACT(HOUR FROM U.request_datetime) AS hour,
+                CASE WHEN W.rain > 0 THEN 'Rain' ELSE 'No Rain' END AS rain_status,
+                UR.username,
+                COUNT(*) AS ride_count,
+                SUM(U.total_fare) AS total_revenue,
+                AVG(U.trip_miles) AS avg_trip_miles
             FROM Uber_Rides U
             JOIN Weather W ON U.request_hour = W.time
             JOIN user_rides UR ON U.ride_id = UR.ride_id
             JOIN Users S ON UR.username = S.username
             GROUP BY hour, rain_status, UR.username
-        ) AS per_user
+        )
+        SELECT
+            hour,
+            rain_status,
+            SUM(total_revenue) AS total_revenue,
+            ROUND(AVG(avg_trip_miles)::numeric, 2) AS avg_trip_miles,
+            SUM(ride_count) AS ride_count,
+            ROUND(AVG(ride_count)::numeric, 2) AS avg_rides_per_user
+        FROM user_hourly_aggregates
         GROUP BY hour, rain_status
         ORDER BY hour, rain_status;
     `;
