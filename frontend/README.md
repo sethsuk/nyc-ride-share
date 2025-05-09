@@ -1,12 +1,1 @@
-# React + Vite
-
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
-
-Currently, two official plugins are available:
-
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+Our web application is an online interactive application that seeks to predict rideshare price and time based on a source and target location selected at a certain time of the week. This would allow users to select a source and target destination in New York, likely using an online mapping API (Google Maps) for the front-end UI, at a given date and time of the week. We started this because when David, fresh off the boat from Korea, first went to NYC, he was baffled by the extreme rideshare prices. If he had been able to predict them before visiting NYC through an application like the one we’re currently developing, he would’ve been able to plan his trip much better.
