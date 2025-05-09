@@ -246,8 +246,8 @@ export default function HomeScreen() {
     
             <div className="map-container">
               <div className="zone-badges">
-                <div className="zone-badge origin">Pickup: {origin ?? '—'}</div>
-                <div className="zone-badge dest">Dropoff: {destination ?? '—'}</div>
+                <div className="zone-badge origin">Pickup: Zone {origin ?? '—'}</div>
+                <div className="zone-badge dest">Dropoff: Zone {destination ?? '—'}</div>
               </div>
     
               <Map
