@@ -1,0 +1,264 @@
+.startMap, .endMap {
+  padding: 2rem;
+  text-align: center;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+p {
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.map-container {
+  width: 100%;
+  height: 500px;
+  padding: 1rem;
+  margin-bottom: 2rem;
+}
+
+.map {
+  height: 500px;
+}
+
+.zone-badges {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.zone-badge {
+  padding: 0.5rem 1rem;
+  border-radius: 50px;
+  background-color: #f1f1f1;
+  font-weight: 500;
+  font-size: 0.9rem;
+  color: #333;
+}
+
+.zone-badge.origin {
+  border: 2px solid #00b894;
+}
+
+.zone-badge.dest {
+  border: 2px solid #0984e3;
+}
+
+.btn, .confirm, .reset-button {
+  background-color: #2d3436;
+  color: white;
+  padding: 0.75rem 1.5rem;
+  margin: 0.5rem;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: all 0.2s ease-in-out;
+}
+
+.btn:hover, .confirm:hover, .reset-button:hover {
+  background-color: #636e72;
+}
+
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.4);
+  z-index: 10;
+}
+
+.modal {
+  position: fixed;
+  top: 10%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  max-width: 700px;
+  width: 90%;
+  z-index: 11;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+.modal h2 {
+  margin-bottom: 1rem;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 2rem;
+}
+
+.close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  font-size: 1.5rem;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+.weather-summary-inline {
+  font-size: 0.95rem;
+  margin-top: 0.25rem;
+  color: #444;
+}
+
+.mapboxgl-ctrl-attrib {
+  display: none !important;
+}
+
+.map-container {
+  width: 100%;
+  padding: 1rem;
+  margin-bottom: 2rem;
+  position: relative;
+  z-index: 0;
+}
+
+.map {
+  height: 60vh !important;
+  width: 100%;
+  min-height: 400px;
+}
+
+.button-group {
+  margin-top: 1.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.75rem;
+  position: relative;
+  z-index: 2;
+}
+
+.confirm, .reset-button, .btn {
+  background-color: #2d3436;
+  color: white;
+  padding: 0.75rem 1.5rem;
+  margin: 0.5rem;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: all 0.2s ease-in-out;
+}
+
+.confirm:hover, .reset-button:hover, .btn:hover {
+  background-color: #636e72;
+}
+
+.modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+  z-index: 1001;
+  max-width: 90vw;
+  width: 400px;
+}
+
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+}
+
+.close {
+  position: absolute;
+  top: 10px;
+  right: 14px;
+  background: transparent;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+
+.modal-title {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.results-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.result-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.6rem 1rem;
+  background: #f8f9fa;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+}
+
+.result-key {
+  font-weight: 600;
+  color: #222;
+}
+
+.result-value {
+  color: #555;
+  word-break: break-word;
+}
+
+.modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+  z-index: 1001;
+  max-width: 90vw;
+  width: 400px;
+
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.result-card {
+  border: 1px solid #ddd;
+  background: #fafafa;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.result-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.4rem 0;
+}
+
+.result-key {
+  font-weight: 600;
+  color: #333;
+}
+
+.result-value {
+  color: #555;
+}

@@ -4,6 +4,7 @@ import Map from 'react-map-gl/mapbox';
 import * as turf from '@turf/turf';
 import { useUser } from '../context/UserContext.jsx';
 import { useNavigate } from 'react-router-dom';
+import './HomeScreen.css';
 import {
   LineChart,
   Line,
@@ -230,138 +231,162 @@ export default function HomeScreen() {
     setShowModal(true);
   };
 
-  return (
-    <>
-      {user && (
-        <div style={{ textAlign: 'center', marginBottom: '1rem', fontWeight: '600' }}>
-          Welcome, {user} 👋
-        </div>
-      )}
-      {choosingOrigin ? (
-        <div className="startMap">
-          <p>Choose Pickup Location!</p>
-          <hr />
-
-          <div className="map-container">
-            <div className="zone-badges">
-              <div className="zone-badge origin">Pickup: {origin ?? '—'}</div>
-              <div className="zone-badge dest">Dropoff: {destination ?? '—'}</div>
-            </div>
-
-            <button className="btn" onClick={() => navigate('/log')}>
-              Log a Ride
-            </button>
-
-            <Map
-              mapboxAccessToken={import.meta.env.VITE_MAPBOX_ACCESS_TOKEN}
-              initialViewState={{
-                longitude: -73.935242,
-                latitude: 40.73061,
-                zoom: 10
-              }}
-              mapStyle="mapbox://styles/mapbox/streets-v11"
-              maxBounds={[
-                [-74.25909, 40.477399],
-                [-73.700181, 40.917576]
-              ]}
-              onClick={handleMapClick}
-              className="map"
-            />
+    return (
+      <>
+        {user && (
+          <div className="welcome-text">
+            Welcome, {user} 👋
           </div>
-
-          <button className="reset-button" onClick={handleReset}>Reset</button>
-
-          {origin != null && (
-            <button className="confirm" onClick={() => setChoosingOrigin(false)}>
-              Confirm Pickup Location!
-            </button>
-          )}
-        </div>
-      ) : (
-        <div className="endMap">
-          <div className="endMap-header">
-            <p>Choose Dropoff Location!</p>
-            {weatherData?.current && (
-              <div className="weather-summary-inline">
-                Current Weather:
-                🌡️ {weatherData.current.main.temp}°C&nbsp;
-                💨 {weatherData.current.wind.speed} m/s&nbsp;
-                ☔ {weatherData.current.rain?.['1h'] ?? 0} mm
+        )}
+    
+        {choosingOrigin ? (
+          <div className="startMap">
+            <p className="section-title">Choose Pickup Location!</p>
+            <hr />
+    
+            <div className="map-container">
+              <div className="zone-badges">
+                <div className="zone-badge origin">Pickup: {origin ?? '—'}</div>
+                <div className="zone-badge dest">Dropoff: {destination ?? '—'}</div>
               </div>
-            )}
-          </div>
-          <hr />
-
-          <div className="map-container">
-            <div className="zone-badges">
-              <div className="zone-badge origin">Pickup: {origin ?? '—'}</div>
-              <div className="zone-badge dest">Dropoff: {destination ?? '—'}</div>
+    
+              <Map
+                mapboxAccessToken={import.meta.env.VITE_MAPBOX_ACCESS_TOKEN}
+                initialViewState={{ longitude: -73.935242, latitude: 40.73061, zoom: 10 }}
+                mapStyle="mapbox://styles/mapbox/streets-v11"
+                maxBounds={[
+                  [-74.25909, 40.477399],
+                  [-73.700181, 40.917576],
+                ]}
+                onClick={handleMapClick}
+                className="map"
+              />
             </div>
-
-            <Map
-              mapboxAccessToken={import.meta.env.VITE_MAPBOX_ACCESS_TOKEN}
-              initialViewState={{
-                longitude: -73.935242,
-                latitude: 40.73061,
-                zoom: 10
-              }}
-              mapStyle="mapbox://styles/mapbox/streets-v11"
-              maxBounds={[
-                [-74.25909, 40.477399],
-                [-73.700181, 40.917576]
-              ]}
-              onClick={handleMapClick}
-              className="map"
-            />
-
-            <button className="reset-button" onClick={handleReset}>Reset</button>
-          </div>
-
-          {destination != null && (
-            <button className="confirm" onClick={handleConfirmDropoff}>
-              Confirm Dropoff Location!
-            </button>
-          )}
-        </div>
-      )}
-
-      {/* === Modal (metrics only) === */}
-      {showModal && (
-        <>
-          <div className="modal-backdrop" onClick={() => setShowModal(false)} />
-          <div className="modal">
-            <button className="close" onClick={() => setShowModal(false)}>×</button>
-            <h2>Ride-Specific Metrics</h2>
-            <div className="section">
-              <button className="btn" onClick={queryRoute1}>Expected fare given weather conditions</button>
-              <button className="btn" onClick={queryRoute2}>Expected fare given pickup and drop-off locations</button>
-              <button className="btn" onClick={queryRoute3}>Expected ride time</button>
-            </div>
-            <h2>General Metrics</h2>
-            <div className="section">
-              <button className="btn" onClick={queryRoute4}>Hourly ride count for above-average fares</button>
-              <button className="btn" onClick={queryRoute5}>Detailed ride analysis by extreme weather & location</button>
-              <button className="btn" onClick={queryRoute6}>Rush hour vs. non-rush hour by pickup location</button>
-              <button className="btn" onClick={queryRoute7}>Outlier rides based on fare and trip time</button>
-              <button className="btn" onClick={queryRoute8}>Current user aggregated ride stats</button>
-              <button className="btn" onClick={queryRoute9}>All user rides hourly aggregated ride stats</button>
-              <button className="btn" onClick={queryRoute10}>Other users with similar ride history to carpool with</button>
-              <button className="btn" onClick={queryRoute11}>Average fare difference between user and all other rides</button>
+    
+            <div className="button-group">
+              <button className="reset-button" onClick={handleReset}>Reset</button>
+              <button className="btn" onClick={() => navigate('/log')}>Log a Ride</button>
+              {origin != null && (
+                <button className="confirm" onClick={() => setChoosingOrigin(false)}>
+                  Confirm Pickup Location!
+                </button>
+              )}
             </div>
           </div>
-        </>
-      )}
-
-      {showResultsModal && (
-        <div className="modal-backdrop" onClick={() => setShowResultsModal(false)} />
-      )}
-      {showResultsModal && (
-        <div className="modal">
-          <button className="close" onClick={() => setShowResultsModal(false)}>×</button>
-          <h2>Query Results</h2>
-          <pre style={{ overflowX: 'auto', maxHeight: '60vh' }}>{JSON.stringify(results, null, 2)}</pre>
-        </div>
-      )}
-    </>
-  );
+        ) : (
+          <div className="endMap">
+            <div className="endMap-header">
+              <p className="section-title">Choose Dropoff Location!</p>
+              {weatherData?.current && (
+                <div className="weather-summary-inline">
+                  Current Weather: 🌡️ {weatherData.current.main.temp}°C&nbsp;
+                  💨 {weatherData.current.wind.speed} m/s&nbsp;
+                  ☔ {weatherData.current.rain?.['1h'] ?? 0} mm
+                </div>
+              )}
+            </div>
+            <hr />
+    
+            <div className="map-container">
+              <div className="zone-badges">
+                <div className="zone-badge origin">Pickup: {origin ?? '—'}</div>
+                <div className="zone-badge dest">Dropoff: {destination ?? '—'}</div>
+              </div>
+    
+              <Map
+                mapboxAccessToken={import.meta.env.VITE_MAPBOX_ACCESS_TOKEN}
+                initialViewState={{
+                  longitude: -73.935242,
+                  latitude: 40.73061,
+                  zoom: 10
+                }}
+                attributionControl={false}
+                mapStyle="mapbox://styles/mapbox/streets-v11"
+                maxBounds={[
+                  [-74.25909, 40.477399],
+                  [-73.700181, 40.917576]
+                ]}
+                onClick={handleMapClick}
+                style={{ height: '60vh', width: '100%' }} // 👈 Add this for Pickup too!
+              />
+            </div>
+    
+            <div className="button-group">
+              <button className="reset-button" onClick={handleReset}>Reset</button>
+              {destination != null && (
+                <button className="confirm" onClick={handleConfirmDropoff}>
+                  Confirm Dropoff Location!
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+    
+        {showModal && (
+          <>
+            <div className="modal-backdrop" onClick={() => setShowModal(false)} />
+            <div className="modal">
+              <button className="close" onClick={() => setShowModal(false)}>×</button>
+              <h2>Ride-Specific Metrics</h2>
+              <div className="section">
+                <button className="btn" onClick={queryRoute1}>Expected fare given weather conditions</button>
+                <button className="btn" onClick={queryRoute2}>Expected fare given pickup and drop-off locations</button>
+                <button className="btn" onClick={queryRoute3}>Expected ride time</button>
+              </div>
+    
+              <h2>General Metrics</h2>
+              <div className="section">
+                <button className="btn" onClick={queryRoute4}>Hourly ride count for above-average fares</button>
+                <button className="btn" onClick={queryRoute5}>Detailed ride analysis by extreme weather & location</button>
+                <button className="btn" onClick={queryRoute6}>Rush hour vs. non-rush hour by pickup location</button>
+                <button className="btn" onClick={queryRoute7}>Outlier rides based on fare and trip time</button>
+                <button className="btn" onClick={queryRoute8}>Current user aggregated ride stats</button>
+                <button className="btn" onClick={queryRoute9}>All user rides hourly aggregated ride stats</button>
+                <button className="btn" onClick={queryRoute10}>Other users with similar ride history to carpool with</button>
+                <button className="btn" onClick={queryRoute11}>Average fare difference between user and all other rides</button>
+              </div>
+            </div>
+          </>
+        )}
+    
+    {showResultsModal && (
+          <>
+            <div className="modal-backdrop" onClick={() => setShowResultsModal(false)} />
+            <div className="modal">
+              <button className="close" onClick={() => setShowResultsModal(false)}>×</button>
+              <h2 className="modal-title">Query Results</h2>
+              <div className="results-container">
+                {Array.isArray(results) ? (
+                  results.map((item, idx) => (
+                    <div key={idx} className="result-card">
+                      {Object.entries(item)
+                        .filter(([key]) => key !== 'method')
+                        .map(([key, value]) => (
+                          <div key={key} className="result-item">
+                            <span className="result-key">
+                              {key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}
+                            </span>
+                            <span className="result-value">{value}</span>
+                          </div>
+                        ))}
+                    </div>
+                  ))
+                ) : (
+                  Object.entries(results)
+                    .filter(([key]) => key !== 'method')
+                    .map(([key, value]) => (
+                      <div key={key} className="result-item">
+                        <span className="result-key">
+                          {key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}
+                        </span>
+                        <span className="result-value">{value}</span>
+                      </div>
+                    ))
+                )}
+              </div>
+            </div>
+          </>
+        )}
+      </>
+    );
 }
