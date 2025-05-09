@@ -21,24 +21,21 @@ router.get('/test', async (req, res) => {
 
 // 1. Avg fare by weather
 router.get('/avg-fare-weather', async (req, res) => {
-    const temp  = parseFloat(req.query.temperature);
-    const rain  = parseFloat(req.query.rain);
-    const wind = parseFloat(req.query.wind_speed);
+    const { temperature, rain, wind_speed } = req.query;
 
-    if ([temp, rain, wind].some(Number.isNaN)) {
+    if ([temperature, rain, wind_speed].some(Number.isNaN)) {
         return res.status(400).json({ error: 'temperature, rain, and wind_speed must be numeric query parameters' });
     }
 
     try {
         const sql = `
             SELECT ROUND(AVG(u.total_fare), 2) AS avg_fare
-            FROM uber_rides u
-            JOIN weather w ON u.request_hour = w.time
+            FROM uber_rides u JOIN weather w ON u.request_hour = w.time
             WHERE w.temperature BETWEEN $1 - 1 AND $1 + 1
                 AND w.rain BETWEEN $2 - 0.1 AND $2 + 0.1
                 AND w.wind_speed BETWEEN $3 - 1 AND $3 + 1;
         `;
-        const { rows } = await pool.query(sql, [temp, rain, wind]);
+        const { rows } = await pool.query(sql, [temperature, rain, wind_speed]);
 
         if (!rows[0].avg_fare) {
             return res.status(404).json({ error: 'No rides matched those conditions' });
@@ -51,38 +48,31 @@ router.get('/avg-fare-weather', async (req, res) => {
     }
 });
 
-// 2. Avg fare by PU/DO + weather (with fallback)
+// 2. Avg fare by PU/DO + weather
 router.get('/avg-fare-estimate', async (req, res) => {
-    const { puLocationId, doLocationId, temperature, rain, windSpeed } = req.query;
+    const { pulocationid, dolocationid, temperature, rain, wind_speed } = req.query;
+
+    if ([pulocationid, dolocationid, temperature, rain, wind_speed].some(v => v === undefined)) {
+        return res.status(400).json({ error: 'Missing query parameters' });
+    }
 
     try {
-        const exactQuery = `
-            SELECT ROUND(AVG(U.total_fare), 2) as avg_fare
-            FROM uber_rides as U JOIN weather as W
-            ON U.request_hour = W.time
-            WHERE U.pulocationid = $1 AND U.dolocationid = $2
+        const query = `
+            SELECT ROUND(AVG(U.total_fare), 2) AS avg_fare
+            FROM uber_rides AS U JOIN weather AS W ON U.request_hour = W.time
+            WHERE U.pulocationid = $1
+                AND U.dolocationid = $2
                 AND W.temperature BETWEEN $3 - 1 AND $3 + 1
                 AND W.rain BETWEEN $4 - 0.1 AND $4 + 0.1
                 AND W.wind_speed BETWEEN $5 - 1 AND $5 + 1
         `;
-        const exactResult = await pool.query(exactQuery, [puLocationId, doLocationId, temperature, rain, windSpeed]);
+        const result = await pool.query(query, [pulocationid, dolocationid, temperature, rain, wind_speed]);
 
-        if (exactResult.rows[0].avg_fare) {
-            return res.json({ avg_fare: exactResult.rows[0].avg_fare, method: "exact" });
+        if (!result.rows[0].avg_fare) {
+            return res.status(404).json({ error: 'No matching rides found for the specified criteria' });
         }
 
-        // fallback: drop PU/DO and return overall average under same weather
-        const fallbackQuery = `
-            SELECT ROUND(AVG(U.total_fare), 2) as avg_fare
-            FROM uber_rides as U JOIN weather as W
-            ON U.request_hour = W.time
-            WHERE W.temperature BETWEEN $1 - 1 AND $1 + 1
-                AND W.rain BETWEEN $2 - 0.1 AND $2 + 0.1
-                AND W.wind_speed BETWEEN $3 - 1 AND $3 + 1;
-        `;
-        const fallbackResult = await pool.query(fallbackQuery, [temperature, rain, windSpeed]);
-        res.json({ avg_fare: fallbackResult.rows[0].avg_fare, method: "weather_only_fallback" });
-
+        res.status(200).json({ avg_fare: result.rows[0].avg_fare });
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Database error' });
@@ -91,18 +81,22 @@ router.get('/avg-fare-estimate', async (req, res) => {
 
 // 3. Average trip time given weather and PU/DO
 router.get('/average-trip-time', async (req, res) => {
-    const { Pickup_id, Dropoff_id, Temperature, Rain, Wind_speed } = req.query;
+    const { pulocationid, dolocationid, temperature, rain, wind_speed } = req.query;
+
+    if ([pulocationid, dolocationid, temperature, rain, wind_speed].some(v => v === undefined)) {
+        return res.status(400).json({ error: 'Missing query parameters' });
+    }
+
     const sql = `
         SELECT ROUND(AVG(U.trip_time) / 60.0, 2) as avg_time_min
-        FROM uber_rides as U JOIN weather as W
-        ON U.request_hour = W.time
+        FROM uber_rides as U JOIN weather as W ON U.request_hour = W.time
         WHERE U.pulocationid = $1 AND U.dolocationid = $2
             AND W.temperature BETWEEN $3 - 1 AND $3 + 1
             AND W.rain BETWEEN $4 - 0.1 AND $4 + 0.1
             AND W.wind_speed BETWEEN $5 - 1 AND $5 + 1;
     `;
     try {
-        const result = await pool.query(sql, [Pickup_id, Dropoff_id, Temperature, Rain, Wind_speed]);
+        const result = await pool.query(sql, [pulocationid, dolocationid, temperature, rain, wind_speed]);
         res.json({ avg_time: result.rows[0].avg_time_min });
     } catch (err) {
         res.status(500).json({ error: 'Database error' });
@@ -118,6 +112,7 @@ router.get('/high-fare-hours', async (req, res) => {
         ORDER BY avg_fare DESC
         LIMIT 5;
     `;
+
     try {
         const result = await pool.query(sql);
         res.json(result.rows);
@@ -145,6 +140,7 @@ router.get('/extreme-weather-routes', async (req, res) => {
         ORDER BY avg_fare DESC
         LIMIT 5;
     `;
+
     try {
         const result = await pool.query(sql);
         res.json(result.rows);
@@ -201,37 +197,39 @@ router.get('/outlier-rides', async (req, res) => {
 // 8. Statistics about user's agg hourly rides and the price difference
 router.get('/user-hourly-stats', async (req, res) => {
   const { username } = req.query;
+
+  if (username === undefined) {
+    return res.status(400).json({ error: 'Missing query parameters' });
+  }
   
   const sql = `
       WITH user_hourly AS (
-          SELECT
-              u.request_hour,
-              AVG(u.total_fare) AS user_avg_fare
-          FROM user_rides ur
-          JOIN uber_rides u
-          ON ur.ride_id = u.ride_id
-          WHERE ur.username = $1
-          GROUP BY u.request_hour
+        SELECT
+            u.request_hour,
+            AVG(u.total_fare) AS user_avg_fare
+        FROM user_rides ur
+        JOIN uber_rides u ON ur.ride_id = u.ride_id
+        WHERE ur.username = $1
+        GROUP BY u.request_hour
       ),
       filtered_global AS (
-          SELECT
-              m.hour,
-              m.avg_fare AS global_avg_fare
-          FROM mv_hourly_ride_stats m
-          WHERE EXISTS (
-              SELECT 1
-              FROM user_hourly uh
-              WHERE uh.request_hour = m.hour
-          )
+        SELECT
+            m.hour,
+            m.avg_fare AS global_avg_fare
+        FROM mv_hourly_ride_stats m
+        WHERE EXISTS (
+            SELECT 1
+            FROM user_hourly uh
+            WHERE uh.request_hour = m.hour
+        )
       )
       SELECT
-          f.hour,
-          ROUND(uh.user_avg_fare, 2) AS user_avg_fare,
-          ROUND(f.global_avg_fare, 2) AS global_avg_fare,
-          ROUND((uh.user_avg_fare - f.global_avg_fare), 2) AS fare_diff
+        f.hour,
+        ROUND(uh.user_avg_fare, 2) AS user_avg_fare,
+        ROUND(f.global_avg_fare, 2) AS global_avg_fare,
+        ROUND((uh.user_avg_fare - f.global_avg_fare), 2) AS fare_diff
       FROM filtered_global f
-      JOIN user_hourly uh
-      ON uh.request_hour = f.hour
+      JOIN user_hourly uh ON uh.request_hour = f.hour
       ORDER BY fare_diff DESC
       LIMIT 5;
   `;
@@ -245,6 +243,7 @@ router.get('/user-hourly-stats', async (req, res) => {
   }
 });
 
+// 9. Hourly statistics of all user rides based on weather
 router.get('/total-user-hourly-aggregates', async (req, res) => {
     const sql = `
         WITH user_hourly_aggregates AS (
@@ -256,9 +255,9 @@ router.get('/total-user-hourly-aggregates', async (req, res) => {
                 SUM(U.total_fare) AS total_revenue,
                 AVG(U.trip_miles) AS avg_trip_miles
             FROM Uber_Rides U
-            JOIN Weather W ON U.request_hour = W.time
-            JOIN user_rides UR ON U.ride_id = UR.ride_id
-            JOIN Users S ON UR.username = S.username
+                JOIN Weather W ON U.request_hour = W.time
+                JOIN user_rides UR ON U.ride_id = UR.ride_id
+                JOIN Users S ON UR.username = S.username
             GROUP BY hour, rain_status, UR.username
         )
         SELECT
@@ -272,6 +271,7 @@ router.get('/total-user-hourly-aggregates', async (req, res) => {
         GROUP BY hour, rain_status
         ORDER BY hour, rain_status;
     `;
+
     try {
         const result = await pool.query(sql);
         res.json(result.rows);
@@ -283,6 +283,10 @@ router.get('/total-user-hourly-aggregates', async (req, res) => {
 // 10. Similar users that might carpool together
 router.get('/carpool', async (req, res) => {
     const { username } = req.query;
+
+    if (username === undefined) {
+        return res.status(400).json({ error: 'Missing query parameters' });
+    }
 
     const sql = `
         WITH user_features AS (
@@ -311,8 +315,7 @@ router.get('/carpool', async (req, res) => {
                 + ABS(uf.avg_trip_time - t.avg_trip_time)
                 + ABS(uf.avg_trip_miles - t.avg_trip_miles))::numeric, 2)
             AS similarity_score
-        FROM user_features uf
-        CROSS JOIN target t
+        FROM user_features uf CROSS JOIN target t
         WHERE uf.username <> t.username
         ORDER BY similarity_score
         LIMIT 5;
@@ -328,6 +331,10 @@ router.get('/carpool', async (req, res) => {
 // 11. overpaid
 router.get('/overpaid', async (req, res) => {
     const { username } = req.query;
+
+    if (username === undefined) {
+        return res.status(400).json({ error: 'Missing query parameters' });
+    }
 
     const sql = `
         WITH user_corridor_fares AS (
@@ -357,6 +364,7 @@ router.get('/overpaid', async (req, res) => {
             WHERE js.user_avg_fare > js.overall_avg_fare
         );
     `;
+
     try {
         const result = await pool.query(sql, [username]);
         res.json(result.rows);
